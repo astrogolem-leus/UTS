@@ -11,10 +11,20 @@ import cv2
 # ==========================
 @st.cache_resource
 def load_models():
-    yolo_model = YOLO("model/best.pt")  # Model deteksi objek
-    classifier = tf.keras.models.load_model("model/model_Laporan_2.tflite")  # Model klasifikasi
-    return yolo_model, classifier
+    # Load model deteksi objek YOLO
+    yolo_model = YOLO("model/best.pt")
 
+    # Load model klasifikasi TFLite
+    interpreter = tf.lite.Interpreter(model_path="model/model_Laporan_2.tflite")
+    interpreter.allocate_tensors()
+
+    # Dapatkan detail input & output untuk inferensi nanti
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+
+    return yolo_model, (interpreter, input_details, output_details)
+
+# Memanggil fungsi
 yolo_model, classifier = load_models()
 
 # ==========================
