@@ -44,8 +44,19 @@ if uploaded_file is not None:
         # ==========================
         # Preprocessing untuk TFLite
         # ==========================
-        img_resized = img.resize((224, 224))  # sesuaikan ukuran input model
-        img_array = np.expand_dims(np.array(img_resized, dtype=np.float32) / 255.0, axis=0)
+        input_shape = input_details[0]['shape']        # contoh: [1, 224, 224, 3]
+        input_dtype = input_details[0]['dtype']        # contoh: float32 atau uint8
+
+        img_resized = img.resize((input_shape[1], input_shape[2]))  # sesuaikan ukuran otomatis
+        img_array = np.array(img_resized)
+
+        # Normalisasi hanya kalau model pakai float32
+        if input_dtype == np.float32:
+            img_array = img_array.astype(np.float32) / 255.0
+        else:
+            img_array = img_array.astype(np.uint8)
+
+        img_array = np.expand_dims(img_array, axis=0)
 
         # Set input ke model
         interpreter.set_tensor(input_details[0]['index'], img_array)
@@ -53,7 +64,7 @@ if uploaded_file is not None:
 
         # Ambil hasil output
         prediction = interpreter.get_tensor(output_details[0]['index'])
-        class_index = np.argmax(prediction)
+        class_index = int(np.argmax(prediction))
         confidence = float(np.max(prediction))
 
         # ==========================
