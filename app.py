@@ -78,5 +78,5 @@ if uploaded_file is not None:
         st.write("### Hasil Prediksi:", class_index)
         st.write("Probabilitas:", f"{confidence:.2f}")
 
-        except Exception:
+     except Exception:
             st.warning("⚠️ Gambar tidak bisa dideteksi oleh model klasifikasi. Silakan coba gambar lain.")
