@@ -1,72 +1,63 @@
 import streamlit as st
+from ultralytics import YOLO
 import tensorflow as tf
+from tensorflow.keras.preprocessing import image
 import numpy as np
 from PIL import Image
-from ultralytics import YOLO
 
-# ---------------------------
-# Fungsi Load Model
-# ---------------------------
+# ==========================
+# Load Models
+# ==========================
 @st.cache_resource
 def load_models():
     yolo_model = YOLO("model/best.pt")  # Model YOLO
-    interpreter = tf.lite.Interpreter(model_path="model/model_Laporan_2.tflite")  # Model klasifikasi
+    # Load model TFLite
+    interpreter = tf.lite.Interpreter(model_path="model/model_Laporan_2.tflite")
     interpreter.allocate_tensors()
     return yolo_model, interpreter
 
-
-# Muat model
 yolo_model, interpreter = load_models()
 
-# Ambil detail tensor
+# Dapatkan input dan output details dari TFLite model
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
 
-# Label kelas sesuai urutan pelatihan
-class_names = ["book", "chair", "laptop", "person", "table"]
+# ==========================
+# UI
+# ==========================
+st.title("🧠 Image Classification & Object Detection App")
 
-# ---------------------------
-# Upload Gambar
-# ---------------------------
+menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     img = Image.open(uploaded_file).convert("RGB")
     st.image(img, caption="Gambar yang Diupload", use_container_width=True)
 
-    # Pilihan menu
-    menu = st.radio("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
-
     if menu == "Deteksi Objek (YOLO)":
-        try:
-            results = yolo_model(img)
-            result_img = results[0].plot()
-            st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
-        except Exception:
-            st.warning("⚠️ Gambar tidak bisa dideteksi oleh model YOLO. Silakan coba gambar lain.")
+        # Deteksi objek dengan YOLO
+        results = yolo_model(img)
+        result_img = results[0].plot()
+        st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
 
     elif menu == "Klasifikasi Gambar":
-        try:
-            # ---------------------------
-            # Preprocessing
-            # ---------------------------
-            img_resized = img.resize((224, 224))
-            img_array = np.array(img_resized, dtype=np.float32)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
+        # ==========================
+        # Preprocessing untuk TFLite
+        # ==========================
+        img_resized = img.resize((224, 224))  # sesuaikan ukuran input model
+        img_array = np.expand_dims(np.array(img_resized, dtype=np.float32) / 255.0, axis=0)
 
-            # ---------------------------
-            # Prediksi
-            # ---------------------------
-            interpreter.set_tensor(input_details[0]['index'], img_array)
-            interpreter.invoke()
-            output_data = interpreter.get_tensor(output_details[0]['index'])[0]
+        # Set input ke model
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
 
-            class_index = np.argmax(output_data)
-            confidence = float(np.max(output_data))
+        # Ambil hasil output
+        prediction = interpreter.get_tensor(output_details[0]['index'])
+        class_index = np.argmax(prediction)
+        confidence = float(np.max(prediction))
 
-            st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
-            st.write(f"Probabilitas: {confidence:.2f}")
-
-        except Exception:
-            st.warning("⚠️ Gambar tidak bisa dideteksi oleh model klasifikasi. Silakan coba gambar lain.")
+        # ==========================
+        # Output ke user
+        # ==========================
+        st.write("### Hasil Prediksi:", class_index)
+        st.write("Probabilitas:", f"{confidence:.2f}")
