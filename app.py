@@ -67,3 +67,8 @@ if uploaded_file is not None:
 
             st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
             st.write(f"Probabilitas: {confidence:.2f}")
+
+    except Exception as e:
+        # Tampilkan error asli di Streamlit
+        st.error("🚨 Terjadi error saat menjalankan klasifikasi gambar:")
+        st.exception(e)
