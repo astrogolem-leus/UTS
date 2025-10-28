@@ -33,6 +33,9 @@ st.title("Image Classification & Object Detection App")
 menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
 
+st.progress(float(confidence))
+st.write(f"✅ Prediksi: {class_name} ({confidence*100:.2f}%)")
+
 if uploaded_file is not None:
     img = Image.open(uploaded_file).convert("RGB")
     st.image(img, caption="Gambar yang Diupload", use_container_width=True)
