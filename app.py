@@ -47,29 +47,30 @@ if uploaded_file is not None:
 
     elif menu == "Klasifikasi Gambar":
         try:
-            # ---------------------------
-            # Preprocessing
-            # ---------------------------
-            img_resized = img.resize((224, 224))
-            img_array = np.array(img_resized, dtype=np.float32)
+            # --- Ambil ukuran input dari model ---
+            input_shape = input_details[0]['shape']
+            target_height, target_width = input_shape[1], input_shape[2]
+
+            # --- Preprocessing gambar ---
+            img_resized = img.resize((target_width, target_height))
+            img_array = image.img_to_array(img_resized)
             img_array = np.expand_dims(img_array, axis=0)
             img_array = img_array / 255.0
 
-            # ---------------------------
-            # Prediksi
-            # ---------------------------
+            # --- Prediksi dengan TFLite ---
             interpreter.set_tensor(input_details[0]['index'], img_array)
             interpreter.invoke()
-            output_data = interpreter.get_tensor(output_details[0]['index'])[0]
+            output_data = interpreter.get_tensor(output_details[0]['index'])
 
             class_index = np.argmax(output_data)
-            confidence = float(np.max(output_data))
+            probability = np.max(output_data)
 
-            st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
-            st.write(f"Probabilitas: {confidence:.2f}")
+            class_names = ["book", "chair", "laptop", "person", "table"]
+
+            st.write("### 🧠 Hasil Prediksi:", class_names[class_index])
+            st.write(f"📊 Probabilitas: {probability:.2f}")
 
         except Exception as e:
-            # Tampilkan error asli di Streamlit
             st.error("🚨 Terjadi error saat menjalankan klasifikasi gambar:")
             st.exception(e)
-    
+
