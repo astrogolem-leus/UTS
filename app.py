@@ -2,24 +2,20 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+from ultralytics import YOLO
 
 # ---------------------------
 # Fungsi Load Model
 # ---------------------------
 @st.cache_resource
 def load_models():
-    # Muat model YOLO (jika kamu masih pakai untuk deteksi objek)
-    from ultralytics import YOLO
-    yolo_model = YOLO("model/best.pt")
-
-    # Muat model klasifikasi TFLite
-    interpreter = tf.lite.Interpreter(model_path="model/model_Laporan_2.tflite")
+    yolo_model = YOLO("model/best.pt")  # Model YOLO
+    interpreter = tf.lite.Interpreter(model_path="model/model_Laporan_2.tflite")  # Model klasifikasi
     interpreter.allocate_tensors()
-
     return yolo_model, interpreter
 
 
-# Panggil model
+# Muat model
 yolo_model, interpreter = load_models()
 
 # Ambil detail tensor
@@ -42,23 +38,26 @@ if uploaded_file is not None:
     menu = st.radio("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 
     if menu == "Deteksi Objek (YOLO)":
-        results = yolo_model(img)
-        result_img = results[0].plot()
-        st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+        try:
+            results = yolo_model(img)
+            result_img = results[0].plot()
+            st.image(result_img, caption="Hasil Deteksi", use_container_width=True)
+        except Exception:
+            st.warning("⚠️ Gambar tidak bisa dideteksi oleh model YOLO. Silakan coba gambar lain.")
 
     elif menu == "Klasifikasi Gambar":
-        # ---------------------------
-        # Preprocessing
-        # ---------------------------
-        img_resized = img.resize((224, 224))  # ukuran input model
-        img_array = np.array(img_resized, dtype=np.float32)
-        img_array = np.expand_dims(img_array, axis=0)
-        img_array = img_array / 255.0
-
-        # ---------------------------
-        # Prediksi
-        # ---------------------------
         try:
+            # ---------------------------
+            # Preprocessing
+            # ---------------------------
+            img_resized = img.resize((224, 224))
+            img_array = np.array(img_resized, dtype=np.float32)
+            img_array = np.expand_dims(img_array, axis=0)
+            img_array = img_array / 255.0
+
+            # ---------------------------
+            # Prediksi
+            # ---------------------------
             interpreter.set_tensor(input_details[0]['index'], img_array)
             interpreter.invoke()
             output_data = interpreter.get_tensor(output_details[0]['index'])[0]
@@ -69,5 +68,5 @@ if uploaded_file is not None:
             st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
             st.write(f"Probabilitas: {confidence:.2f}")
 
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat prediksi: {e}")
+        except Exception:
+            st.warning("⚠️ Gambar tidak bisa dideteksi oleh model klasifikasi. Silakan coba gambar lain.")
