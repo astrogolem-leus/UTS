@@ -31,7 +31,6 @@ st.title("Image Classification & Object Detection App")
 
 menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
-theme = st.sidebar.radio("Tema", ["🌞 Terang", "🌙 Gelap"])
 
 if uploaded_file is not None:
     img = Image.open(uploaded_file).convert("RGB")
