@@ -45,7 +45,7 @@ if uploaded_file is not None:
         except Exception:
             st.warning("⚠️ Gambar tidak bisa dideteksi oleh model YOLO. Silakan coba gambar lain.")
 
-   elif menu == "Klasifikasi Gambar":
+    elif menu == "Klasifikasi Gambar":
         # ==========================
         # Preprocessing untuk TFLite
         # ==========================
