@@ -67,6 +67,3 @@ if uploaded_file is not None:
 
             st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
             st.write(f"Probabilitas: {confidence:.2f}")
-
-        except Exception:
-            st.warning("⚠️ Gambar tidak bisa dideteksi oleh model klasifikasi. Silakan coba gambar lain.")
