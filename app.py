@@ -25,18 +25,18 @@ output_details = interpreter.get_output_details()
 # Label kelas sesuai urutan pelatihan
 class_names = ["book", "chair", "laptop", "person", "table"]
 
-# ---------------------------
-# Upload Gambar
-# ---------------------------
+# ==========================
+# UI
+# ==========================
+st.title("Image Classification & Object Detection App")
+
+menu = st.sidebar.selectbox("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
 uploaded_file = st.file_uploader("Unggah Gambar", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
     img = Image.open(uploaded_file).convert("RGB")
     st.image(img, caption="Gambar yang Diupload", use_container_width=True)
-
-    # Pilihan menu
-    menu = st.radio("Pilih Mode:", ["Deteksi Objek (YOLO)", "Klasifikasi Gambar"])
-
+    
     if menu == "Deteksi Objek (YOLO)":
         try:
             results = yolo_model(img)
