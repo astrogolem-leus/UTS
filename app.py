@@ -45,28 +45,38 @@ if uploaded_file is not None:
         except Exception:
             st.warning("⚠️ Gambar tidak bisa dideteksi oleh model YOLO. Silakan coba gambar lain.")
 
-    elif menu == "Klasifikasi Gambar":
-        try:
-            # ---------------------------
-            # Preprocessing
-            # ---------------------------
-            img_resized = img.resize((224, 224))
-            img_array = np.array(img_resized, dtype=np.float32)
-            img_array = np.expand_dims(img_array, axis=0)
-            img_array = img_array / 255.0
+   elif menu == "Klasifikasi Gambar":
+        # ==========================
+        # Preprocessing untuk TFLite
+        # ==========================
+        input_shape = input_details[0]['shape']        # contoh: [1, 224, 224, 3]
+        input_dtype = input_details[0]['dtype']        # contoh: float32 atau uint8
 
-            # ---------------------------
-            # Prediksi
-            # ---------------------------
-            interpreter.set_tensor(input_details[0]['index'], img_array)
-            interpreter.invoke()
-            output_data = interpreter.get_tensor(output_details[0]['index'])[0]
+        img_resized = img.resize((input_shape[1], input_shape[2]))  # sesuaikan ukuran otomatis
+        img_array = np.array(img_resized)
 
-            class_index = np.argmax(output_data)
-            confidence = float(np.max(output_data))
+        # Normalisasi hanya kalau model pakai float32
+        if input_dtype == np.float32:
+            img_array = img_array.astype(np.float32) / 255.0
+        else:
+            img_array = img_array.astype(np.uint8)
 
-            st.markdown(f"### 🧠 Hasil Prediksi: **{class_names[class_index]}**")
-            st.write(f"Probabilitas: {confidence:.2f}")
+        img_array = np.expand_dims(img_array, axis=0)
+
+        # Set input ke model
+        interpreter.set_tensor(input_details[0]['index'], img_array)
+        interpreter.invoke()
+
+        # Ambil hasil output
+        prediction = interpreter.get_tensor(output_details[0]['index'])
+        class_index = int(np.argmax(prediction))
+        confidence = float(np.max(prediction))
+
+        # ==========================
+        # Output ke user
+        # ==========================
+        st.write("### Hasil Prediksi:", class_index)
+        st.write("Probabilitas:", f"{confidence:.2f}")
 
         except Exception:
             st.warning("⚠️ Gambar tidak bisa dideteksi oleh model klasifikasi. Silakan coba gambar lain.")
